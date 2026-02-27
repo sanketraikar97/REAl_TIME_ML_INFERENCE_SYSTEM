@@ -17,3 +17,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - DEFAULT_VERSION=v1
+      - LOAD_ALL_MODELS=True
+      - CANARY_VERSION=v2
+      - CANARY_PERCENT=10
