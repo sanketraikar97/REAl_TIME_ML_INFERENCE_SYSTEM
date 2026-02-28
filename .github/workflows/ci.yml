@@ -15,11 +15,11 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
-        options: >-
-          --health-cmd='redis-cli ping'
-          --health-interval=5s
-          --health-timeout=3s
-          --health-retries=20
+        # options: >-
+        #   --health-cmd='redis-cli ping'
+        #   --health-interval=5s
+        #   --health-timeout=3s
+        #   --health-retries=20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,6 +34,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
+      - name: Wait for Redis
+        run: |
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/6379) >/dev/null 2>&1 && echo "Redis is up" && exit 0
+            echo "Waiting for Redis..."
+            sleep 1
+          done
+          echo "Redis did not start in time"
+          exit 1
+
       - name: Run tests
         env:
           # DEFAULT_MODEL_VERSION: 'v1'
