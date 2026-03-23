@@ -6,3 +6,4 @@ venv/
 *.log
 .DS_Store
 .vscode/
+training/classifier_v1/data
