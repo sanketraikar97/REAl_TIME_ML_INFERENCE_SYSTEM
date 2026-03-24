@@ -7,6 +7,7 @@ from .load_raw_data import load_reviews
 from .data_utils import split_data, YelpReviewDataset
 from .text_preprocessing import build_vocab
 from .model_BiLSTM import BiLSTMClassifier
+from .embedding_utils import load_glove, build_embedding_matrix
 
 
 def train_epoch(model, dataloader, optimizer, criterion, device):
@@ -76,6 +77,7 @@ def main():
 
     base_dir = Path(__file__).resolve().parents[1]
     file_path = base_dir / "data" / "yelp_dataset" / "yelp_academic_dataset_review.json"
+    glove_path = base_dir / "data" / "glove6B" / "glove.6B.200d.txt"
 
     records = load_reviews(file_path, max_samples=200000)
     train_data, val_data, test_data = split_data(records)
@@ -83,13 +85,25 @@ def main():
     train_texts = [r["text"] for r in train_data]
     vocab = build_vocab(train_texts)
 
+    glove_embeddings = load_glove(glove_path, embedding_dim=200)
+    embedding_matrix, count, coverage = build_embedding_matrix(
+        vocab, glove_embeddings, embedding_dim=200
+    )
+
     train_dataset = YelpReviewDataset(train_data, vocab, max_length=300)
     val_dataset = YelpReviewDataset(val_data, vocab, max_length=300)
 
     train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=256, shuffle=False)
 
-    model = BiLSTMClassifier(vocab_size=len(vocab)).to(device)
+    model = BiLSTMClassifier(
+        vocab_size=len(vocab),
+        embedding_dim=200,
+        hidden_dim=128,
+        num_classes=5,
+        pre_trained_embeddings=embedding_matrix,
+        freeze_embeddings=False,
+    ).to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)

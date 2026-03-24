@@ -8,10 +8,12 @@ class BiLSTMClassifier(nn.Module):
         self,
         vocab_size,
         embedding_dim=128,
+        pre_trained_embeddings=None,
         hidden_dim=128,
         num_classes=5,
         num_layers=1,
         dropout=0.3,
+        freeze_embeddings=False,
     ):
 
         super().__init__()
@@ -19,6 +21,12 @@ class BiLSTMClassifier(nn.Module):
         self.embedding = nn.Embedding(
             num_embeddings=vocab_size, embedding_dim=embedding_dim, padding_idx=0
         )
+
+        if pre_trained_embeddings is not None:
+            self.embedding.weight.data.copy_(torch.tensor(pre_trained_embeddings))
+            if freeze_embeddings:
+                self.embedding.weight.requires_grad_ = False
+
         self.lstm = nn.LSTM(
             input_size=embedding_dim,
             hidden_size=hidden_dim,
